@@ -23,23 +23,26 @@ import { LoginScreen } from '../features/auth/screens/LoginScreen';
 import { RegisterScreen } from '../features/auth/screens/RegisterScreen';
 import { useAuthStore } from '../features/auth/store';
 import { GalleryScreen } from '../features/gallery/GalleryScreen';
+import { TaskModalScreen } from '../features/tasks/screens/TaskModalScreen';
+import { TasksScreen } from '../features/tasks/screens/TasksScreen';
+import { TodayScreen } from '../features/tasks/screens/TodayScreen';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing } from '../theme/tokens';
+import type {
+  AppTabsParamList,
+  AuthStackParamList,
+  AuthenticatedStackParamList,
+} from './navigationTypes';
 
-export type AuthStackParamList = {
-  Login: undefined;
-  Register: undefined;
-  Gallery: undefined;
-};
-
-export type AppTabsParamList = {
-  Today: undefined;
-  Tasks: undefined;
-  Settings: undefined;
-  Gallery?: undefined;
-};
+export type {
+  AppTabsParamList,
+  AuthStackParamList,
+  AuthenticatedStackParamList,
+} from './navigationTypes';
 
 const AuthStackNav = createNativeStackNavigator<AuthStackParamList>();
+const AuthenticatedStackNav =
+  createNativeStackNavigator<AuthenticatedStackParamList>();
 const TabsNav = createBottomTabNavigator<AppTabsParamList>();
 
 function BrandedBootScreen() {
@@ -107,29 +110,11 @@ function PhaseThreePlaceholder({
   );
 }
 
-function TodayPlaceholder() {
-  return (
-    <PhaseThreePlaceholder
-      title="Today"
-      description="Today summary and due tasks arrive in Phase 4."
-    />
-  );
-}
-
-function TasksPlaceholder() {
-  return (
-    <PhaseThreePlaceholder
-      title="Tasks"
-      description="Infinite task list, search, and filters arrive in Phase 4."
-    />
-  );
-}
-
 function SettingsPlaceholder() {
   return (
     <PhaseThreePlaceholder
       title="Settings"
-      description="Appearance controls and account actions."
+      description="Appearance controls and account actions arrive in Phase 5."
       showLogout
     />
   );
@@ -199,14 +184,14 @@ function AppTabs() {
       }}>
       <TabsNav.Screen
         name="Today"
-        component={TodayPlaceholder}
+        component={TodayScreen}
         options={{
           tabBarIcon: renderTodayIcon,
         }}
       />
       <TabsNav.Screen
         name="Tasks"
-        component={TasksPlaceholder}
+        component={TasksScreen}
         options={{
           tabBarIcon: renderTasksIcon,
         }}
@@ -228,6 +213,25 @@ function AppTabs() {
         />
       ) : null}
     </TabsNav.Navigator>
+  );
+}
+
+function AuthenticatedStack() {
+  const { colors } = useTheme();
+
+  return (
+    <AuthenticatedStackNav.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.bg },
+      }}>
+      <AuthenticatedStackNav.Screen name="AppTabs" component={AppTabs} />
+      <AuthenticatedStackNav.Screen
+        name="TaskModal"
+        component={TaskModalScreen}
+        options={{ presentation: 'modal' }}
+      />
+    </AuthenticatedStackNav.Navigator>
   );
 }
 
@@ -257,7 +261,7 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer theme={navigationTheme}>
-      {token ? <AppTabs /> : <AuthStack />}
+      {token ? <AuthenticatedStack /> : <AuthStack />}
     </NavigationContainer>
   );
 }

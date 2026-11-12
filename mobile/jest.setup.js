@@ -81,10 +81,37 @@ jest.mock('lucide-react-native', () => {
 
 jest.mock('react-native-gesture-handler', () => {
   const { View } = require('react-native');
+  const createPanBuilder = () => {
+    const chain = {
+      enabled: () => chain,
+      activeOffsetX: () => chain,
+      failOffsetY: () => chain,
+      onUpdate: () => chain,
+      onEnd: () => chain,
+    };
+    return chain;
+  };
   return {
     GestureHandlerRootView: View,
+    GestureDetector: ({ children }) => children,
+    Gesture: {
+      Pan: createPanBuilder,
+    },
   };
 });
+
+jest.mock('react-native-worklets', () => ({
+  scheduleOnRN: (fn, ...args) => fn(...args),
+}));
+
+jest.mock('@react-native-community/datetimepicker', () => ({
+  __esModule: true,
+  default: () => null,
+  DateTimePickerAndroid: {
+    open: jest.fn(),
+    dismiss: jest.fn(async () => true),
+  },
+}));
 
 jest.mock('react-native-screens', () => ({
   enableScreens: jest.fn(),
