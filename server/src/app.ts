@@ -5,11 +5,21 @@ import pino from 'pino';
 import { pinoHttp } from 'pino-http';
 
 import { env } from './config/env.js';
+import {
+  createErrorHandler,
+  notFoundHandler,
+} from './middleware/errorHandler.js';
+import { createApiRateLimiter } from './middleware/rateLimit.js';
+import { createAuthRouter } from './modules/auth/routes.js';
 
 export const logger = pino({
   level: env.NODE_ENV === 'test' ? 'silent' : 'info',
   redact: {
-    paths: ['req.headers.authorization', 'req.body.password', 'req.body.passwordHash'],
+    paths: [
+      'req.headers.authorization',
+      'req.body.password',
+      'req.body.passwordHash',
+    ],
     censor: '[REDACTED]',
   },
 });
@@ -33,6 +43,12 @@ export function createApp(): Express {
       },
     });
   });
+
+  app.use('/api/v1', createApiRateLimiter());
+  app.use('/api/v1/auth', createAuthRouter());
+
+  app.use(notFoundHandler);
+  app.use(createErrorHandler(logger));
 
   return app;
 }

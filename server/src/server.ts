@@ -1,9 +1,14 @@
 import http from 'node:http';
 
+import mongoose from 'mongoose';
+
 import { createApp, logger } from './app.js';
 import { env } from './config/env.js';
 
-function start(): void {
+async function start(): Promise<void> {
+  await mongoose.connect(env.MONGODB_URI);
+  logger.info('Connected to MongoDB');
+
   const app = createApp();
   const server = http.createServer(app);
 
@@ -18,7 +23,16 @@ function start(): void {
         logger.error({ err }, 'Error closing HTTP server');
         process.exit(1);
       }
-      process.exit(0);
+      void mongoose
+        .disconnect()
+        .then(() => {
+          logger.info('Disconnected from MongoDB');
+          process.exit(0);
+        })
+        .catch((dbErr: unknown) => {
+          logger.error({ err: dbErr }, 'Error disconnecting from MongoDB');
+          process.exit(1);
+        });
     });
   };
 
@@ -30,4 +44,7 @@ function start(): void {
   });
 }
 
-start();
+void start().catch((err: unknown) => {
+  logger.error({ err }, 'Failed to start Daybook API');
+  process.exit(1);
+});
