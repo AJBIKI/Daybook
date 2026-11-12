@@ -11,6 +11,7 @@ import {
 } from './middleware/errorHandler.js';
 import { createApiRateLimiter } from './middleware/rateLimit.js';
 import { createAuthRouter } from './modules/auth/routes.js';
+import { createTasksRouter } from './modules/tasks/routes.js';
 
 export const logger = pino({
   level: env.NODE_ENV === 'test' ? 'silent' : 'info',
@@ -46,6 +47,7 @@ export function createApp(): Express {
 
   app.use('/api/v1', createApiRateLimiter());
   app.use('/api/v1/auth', createAuthRouter());
+  app.use('/api/v1/tasks', createTasksRouter());
 
   app.use(notFoundHandler);
   app.use(createErrorHandler(logger));
