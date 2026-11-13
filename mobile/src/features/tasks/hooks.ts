@@ -14,6 +14,11 @@ import {
   isDueToday,
 } from '../../lib/dates';
 import { triggerLightHaptic } from '../../lib/haptics';
+import {
+  cancelTaskReminder,
+  getReminderEnabled,
+  scheduleTaskReminder,
+} from '../../lib/reminders';
 import { AppError } from '../../types/api';
 import type { Task, TaskListFilters, TaskSummary } from '../../types/task';
 import {
@@ -165,6 +170,18 @@ export function useToggleTaskMutation() {
       const nextCompleted = !task.completed;
       const nextCompletedAt = nextCompleted ? new Date().toISOString() : null;
 
+      if (nextCompleted) {
+        cancelTaskReminder(task.id).catch(() => {});
+      } else {
+        getReminderEnabled(task.id)
+          .then((enabled) => {
+            if (enabled && task.dueDate) {
+              scheduleTaskReminder(task).catch(() => {});
+            }
+          })
+          .catch(() => {});
+      }
+
       for (const [key, data] of previousLists) {
         const patched = patchInfiniteListPages(
           data,
@@ -269,6 +286,7 @@ export function useDeleteTaskMutation() {
   return useMutation({
     mutationFn: (id: string) => deleteTaskRequest(id),
     onSuccess: ({ id }) => {
+      cancelTaskReminder(id).catch(() => {});
       queryClient.removeQueries({ queryKey: taskKeys.detail(id) });
       showToast('Task deleted', 'info');
     },

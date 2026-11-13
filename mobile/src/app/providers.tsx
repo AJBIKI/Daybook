@@ -8,6 +8,7 @@ import { ToastProvider } from '../components/ui/Toast';
 import { useAuthStore } from '../features/auth/store';
 import { configureApiClient } from '../lib/apiClient';
 import { queryClient, setupQueryManagers } from '../lib/queryClient';
+import { ensureNotificationChannel } from '../lib/reminders';
 import { ThemeProvider } from '../theme/ThemeProvider';
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -23,6 +24,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     });
 
     hydrateSession().catch(() => {});
+    ensureNotificationChannel().catch(() => {});
     const cleanupManagers = setupQueryManagers();
 
     return () => {

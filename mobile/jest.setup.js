@@ -116,3 +116,34 @@ jest.mock('@react-native-community/datetimepicker', () => ({
 jest.mock('react-native-screens', () => ({
   enableScreens: jest.fn(),
 }));
+
+jest.mock('@notifee/react-native', () => ({
+  __esModule: true,
+  default: {
+    createChannel: jest.fn(async () => 'daybook-reminders'),
+    createTriggerNotification: jest.fn(async () => 'mock-notification-id'),
+    cancelNotification: jest.fn(async () => undefined),
+    cancelTriggerNotification: jest.fn(async () => undefined),
+    getTriggerNotificationIds: jest.fn(async () => []),
+    requestPermission: jest.fn(async () => ({ authorizationStatus: 1 })),
+    getNotificationSettings: jest.fn(async () => ({ authorizationStatus: 1 })),
+    onBackgroundEvent: jest.fn(),
+    onForegroundEvent: jest.fn(() => jest.fn()),
+  },
+  AndroidImportance: {
+    HIGH: 4,
+    DEFAULT: 3,
+    LOW: 2,
+    MIN: 1,
+    NONE: 0,
+  },
+  TriggerType: {
+    TIMESTAMP: 0,
+    INTERVAL: 1,
+  },
+  EventType: {
+    DISMISSED: 0,
+    PRESS: 1,
+    ACTION_PRESS: 2,
+  },
+}));

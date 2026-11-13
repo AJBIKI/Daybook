@@ -2,7 +2,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Sun } from 'lucide-react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,6 +26,7 @@ import {
   getOverdueUpperBound,
   getTodayBoundaries,
 } from '../../../lib/dates';
+import { syncReminders } from '../../../lib/reminders';
 import { useIsOnline } from '../../../lib/useIsOnline';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { spacing } from '../../../theme/tokens';
@@ -116,6 +117,13 @@ export function TodayScreen() {
     () => overdueQuery.data?.pages.flatMap((page) => page.tasks) ?? [],
     [overdueQuery.data],
   );
+
+  useEffect(() => {
+    const combined = [...todayTasks, ...overdueTasks];
+    if (combined.length > 0) {
+      syncReminders(combined).catch(() => {});
+    }
+  }, [todayTasks, overdueTasks]);
 
   const totalToday = summaryQuery.data?.today.total ?? 0;
   const completedToday = summaryQuery.data?.today.completed ?? 0;

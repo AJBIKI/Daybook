@@ -2,8 +2,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { format, isSameDay } from 'date-fns';
-import { Calendar, Clock, X } from 'lucide-react-native';
-import React, { useEffect, useRef } from 'react';
+import { Calendar, Clock, Bell, X } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -12,6 +12,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +31,13 @@ import {
   mergeTimePart,
 } from '../../../lib/dates';
 import { triggerLightHaptic } from '../../../lib/haptics';
+import {
+  cancelTaskReminder,
+  getReminderEnabled,
+  hasNotificationPermission,
+  requestNotificationPermission,
+  scheduleTaskReminder,
+} from '../../../lib/reminders';
 import { useIsOnline } from '../../../lib/useIsOnline';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, spacing, touchTarget } from '../../../theme/tokens';
@@ -108,6 +116,15 @@ export function TaskModalScreen({ navigation, route }: Props) {
   });
 
   const hydratedIdRef = useRef<string | undefined>(existingTask?.id);
+  const [reminderEnabled, setReminderEnabledState] = useState(false);
+
+  useEffect(() => {
+    if (existingTask?.id) {
+      getReminderEnabled(existingTask.id).then((enabled) => {
+        setReminderEnabledState(enabled);
+      });
+    }
+  }, [existingTask?.id]);
 
   useEffect(() => {
     if (existingTask && hydratedIdRef.current !== existingTask.id) {
@@ -186,6 +203,39 @@ export function TaskModalScreen({ navigation, route }: Props) {
     });
   };
 
+  const handleToggleReminder = async (nextValue: boolean) => {
+    if (nextValue) {
+      if (!currentDueDate) {
+        Alert.alert(
+          'Due date required',
+          'Please select a due date before setting a reminder.',
+        );
+        return;
+      }
+      if (new Date(currentDueDate).getTime() <= Date.now()) {
+        Alert.alert(
+          'Future date required',
+          'Reminders can only be scheduled for future due dates.',
+        );
+        return;
+      }
+      const hasPerm = await hasNotificationPermission();
+      if (!hasPerm) {
+        const granted = await requestNotificationPermission();
+        if (!granted) {
+          Alert.alert(
+            'Notifications disabled',
+            'Please enable notifications in Android settings to receive reminders.',
+          );
+          return;
+        }
+      }
+      setReminderEnabledState(true);
+    } else {
+      setReminderEnabledState(false);
+    }
+  };
+
   const onSubmit = async (values: TaskFormValues) => {
     if (!isOnline) {
       return;
@@ -198,11 +248,31 @@ export function TaskModalScreen({ navigation, route }: Props) {
     };
 
     try {
+      let savedId = taskId;
       if (isEditing && taskId) {
-        await updateMutation.mutateAsync({ id: taskId, input: payload });
+        const updated = await updateMutation.mutateAsync({
+          id: taskId,
+          input: payload,
+        });
+        savedId = updated.id;
       } else {
-        await createMutation.mutateAsync(payload);
+        const created = await createMutation.mutateAsync(payload);
+        savedId = created.id;
       }
+
+      if (savedId) {
+        if (reminderEnabled && values.dueDate) {
+          await scheduleTaskReminder({
+            id: savedId,
+            title: values.title.trim(),
+            notes: values.notes,
+            dueDate: values.dueDate,
+          });
+        } else {
+          await cancelTaskReminder(savedId);
+        }
+      }
+
       triggerLightHaptic();
       allowExitRef.current = true;
       navigation.goBack();
@@ -227,6 +297,7 @@ export function TaskModalScreen({ navigation, route }: Props) {
             deleteMutation
               .mutateAsync(taskId)
               .then(() => {
+                cancelTaskReminder(taskId).catch(() => {});
                 allowExitRef.current = true;
                 navigation.goBack();
               })
@@ -406,6 +477,42 @@ export function TaskModalScreen({ navigation, route }: Props) {
           </View>
         </View>
 
+        <View
+          style={[
+            styles.reminderCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.line,
+            },
+          ]}>
+          <View style={styles.reminderInfo}>
+            <View style={styles.reminderHeaderRow}>
+              <Bell
+                size={18}
+                color={
+                  reminderEnabled && currentDueDate
+                    ? colors.accent
+                    : colors.inkMuted
+                }
+              />
+              <Text variant="bodyStrong">Due date reminder</Text>
+            </View>
+            <Text variant="caption" muted>
+              {currentDueDate
+                ? 'Device alert when task is due'
+                : 'Select a due date above to enable reminders'}
+            </Text>
+          </View>
+
+          <Switch
+            value={reminderEnabled && Boolean(currentDueDate)}
+            disabled={!currentDueDate || !isOnline}
+            onValueChange={handleToggleReminder}
+            trackColor={{ false: colors.line, true: colors.accent }}
+            thumbColor={colors.surface}
+          />
+        </View>
+
         {!isOnline ? (
           <Text variant="caption" danger>
             You are offline. Reconnect to save or delete tasks.
@@ -491,6 +598,24 @@ const styles = StyleSheet.create({
     borderRadius: radius.input,
     borderWidth: 1,
     paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  reminderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    gap: spacing.md,
+  },
+  reminderInfo: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  reminderHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
