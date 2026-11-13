@@ -13,15 +13,21 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().min(1).default('7d'),
 });
 
-const parsed = envSchema.safeParse(process.env);
+export type Env = z.infer<typeof envSchema>;
 
-if (!parsed.success) {
-  console.error(
-    'Invalid environment configuration:',
-    z.treeifyError(parsed.error),
-  );
+let envConfig: Env;
+try {
+  envConfig = envSchema.parse(process.env);
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    console.error(
+      'Invalid environment configuration:',
+      z.treeifyError(error),
+    );
+  } else {
+    console.error('Invalid environment configuration:', error);
+  }
   process.exit(1);
 }
 
-export const env = parsed.data;
-export type Env = typeof env;
+export const env: Env = envConfig;

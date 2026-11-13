@@ -12,6 +12,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.6",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^18.0.10",
@@ -22,21 +27,16 @@
     "mongoose": "^9.12.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
+    "typescript": "^6.0.3",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.6.6",
     "@types/supertest": "^7.2.1",
     "eslint": "^10.14.0",
     "mongodb-memory-server": "^11.3.0",
     "supertest": "^7.3.2",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
   }
