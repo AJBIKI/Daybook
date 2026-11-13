@@ -1,8 +1,11 @@
 import { Check, Trash2 } from 'lucide-react-native';
 import React, { memo, useCallback, useMemo } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  FadeIn,
+  FadeOut,
+  LinearTransition,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -98,7 +101,11 @@ function SwipeableTaskRowInner({
   }));
 
   return (
-    <View style={styles.wrapper}>
+    <Animated.View
+      layout={reducedMotion ? undefined : LinearTransition.duration(200)}
+      entering={reducedMotion ? undefined : FadeIn.duration(200)}
+      exiting={reducedMotion ? undefined : FadeOut.duration(200)}
+      style={styles.wrapper}>
       <Animated.View
         pointerEvents="none"
         style={[
@@ -137,7 +144,7 @@ function SwipeableTaskRowInner({
           />
         </Animated.View>
       </GestureDetector>
-    </View>
+    </Animated.View>
   );
 }
 

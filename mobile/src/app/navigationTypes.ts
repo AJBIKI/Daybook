@@ -3,14 +3,12 @@ import type { Task } from '../types/task';
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
-  Gallery: undefined;
 };
 
 export type AppTabsParamList = {
   Today: undefined;
   Tasks: { preset?: 'overdue' | 'upcoming'; nonce?: number } | undefined;
   Settings: undefined;
-  Gallery?: undefined;
 };
 
 export type AuthenticatedStackParamList = {

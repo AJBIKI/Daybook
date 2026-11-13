@@ -29,6 +29,7 @@ import {
   mergeDatePart,
   mergeTimePart,
 } from '../../../lib/dates';
+import { triggerLightHaptic } from '../../../lib/haptics';
 import { useIsOnline } from '../../../lib/useIsOnline';
 import { useTheme } from '../../../theme/ThemeProvider';
 import { radius, spacing, touchTarget } from '../../../theme/tokens';
@@ -202,6 +203,7 @@ export function TaskModalScreen({ navigation, route }: Props) {
       } else {
         await createMutation.mutateAsync(payload);
       }
+      triggerLightHaptic();
       allowExitRef.current = true;
       navigation.goBack();
     } catch {

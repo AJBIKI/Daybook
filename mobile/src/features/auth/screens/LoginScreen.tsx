@@ -171,16 +171,6 @@ export function LoginScreen({ navigation }: Props) {
               </Text>
             </Text>
           </Pressable>
-
-          {__DEV__ ? (
-            <Button
-              label="Open UI Kit Gallery (Dev)"
-              variant="ghost"
-              onPress={() => {
-                navigation.navigate('Gallery');
-              }}
-            />
-          ) : null}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
