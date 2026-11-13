@@ -1,19 +1,43 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
-const envSchema = z.object({
+const rawEnvSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
-  JWT_SECRET: z
-    .string()
-    .min(32, 'JWT_SECRET must be at least 32 characters'),
-  JWT_EXPIRES_IN: z.string().min(1).default('7d'),
+  JWT_SECRET: z.string().optional(),
+  JWT_ACCESS_SECRET: z.string().optional(),
+  JWT_EXPIRES_IN: z.string().optional(),
+  JWT_ACCESS_EXPIRES_IN: z.string().optional(),
 });
 
-export type Env = z.infer<typeof envSchema>;
+const envSchema = rawEnvSchema.transform((data) => {
+  const secret = data.JWT_SECRET || data.JWT_ACCESS_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new z.ZodError([
+      {
+        code: 'custom',
+        path: ['JWT_SECRET'],
+        message:
+          'JWT_SECRET (or JWT_ACCESS_SECRET) is required and must be at least 32 characters',
+      },
+    ]);
+  }
+
+  const expiresIn = data.JWT_EXPIRES_IN || data.JWT_ACCESS_EXPIRES_IN || '7d';
+
+  return {
+    PORT: data.PORT,
+    NODE_ENV: data.NODE_ENV,
+    MONGODB_URI: data.MONGODB_URI,
+    JWT_SECRET: secret,
+    JWT_EXPIRES_IN: expiresIn,
+  };
+});
+
+export type Env = z.output<typeof envSchema>;
 
 let envConfig: Env;
 try {

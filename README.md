@@ -199,10 +199,8 @@ All protected endpoints require an `Authorization: Bearer <access_token>` header
    - `NODE_ENV`: `production`
    - `PORT`: `4000`
    - `MONGODB_URI`: `mongodb+srv://daybook_app:...@daybook-cluster...`
-   - `JWT_ACCESS_SECRET`: *(Generate a secure 64-char string: `openssl rand -hex 32`)*
-   - `JWT_REFRESH_SECRET`: *(Generate a secure 64-char string: `openssl rand -hex 32`)*
-   - `JWT_ACCESS_EXPIRES_IN`: `15m`
-   - `JWT_REFRESH_EXPIRES_IN`: `7d`
+   - `JWT_SECRET`: *(Generate a secure 64-char string: `e.g. 7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a`)*
+   - `JWT_EXPIRES_IN`: `7d`
    - `CORS_ORIGIN`: `*`
    - `LOG_LEVEL`: `info`
 5. Click **Create Web Service**. After deployment finishes, verify health via:
